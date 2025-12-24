@@ -10,6 +10,7 @@ import { incomeTaxResident, medicareLevy } from "../../src/lib/ato/tax";
 
 type DeductionEntry = DeductionEntryInput & {
   id?: number;
+  description?: string;
   receipt: boolean;
   notes?: string;
   attachmentData?: string;
