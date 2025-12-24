@@ -43,3 +43,17 @@ export interface BackupPayload {
   schedules: Schedule[];
   occurrences: Occurrence[];
 }
+
+export interface DeductionEntry {
+  id?: number;
+  profileKey: "it" | "uber";
+  date: string; // YYYY-MM-DD
+  categoryKey: string;
+  description: string;
+  amount: number;
+  workUsePercent: number;
+  receipt: boolean;
+  method?: string;
+  km?: number;
+  notes?: string;
+}

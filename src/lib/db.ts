@@ -1,5 +1,5 @@
 import Dexie, { Table } from "dexie";
-import { DebtAccount, Occurrence, Schedule } from "./types";
+import { DebtAccount, DeductionEntry, Occurrence, Schedule } from "./types";
 
 export class CalendarDB extends Dexie {
   debtAccounts!: Table<DebtAccount, number>;
@@ -8,20 +8,7 @@ export class CalendarDB extends Dexie {
   settings!: Table<{ id: string; key: string; value: string }, string>;
   backups!: Table<{ id?: number; createdAt: string; payload: string }, number>;
   profiles!: Table<{ id?: number; key: "it" | "uber"; name: string }, number>;
-  deductionEntries!: Table<{
-    id?: number;
-    profileKey: "it" | "uber";
-    date: string;
-    categoryKey: string;
-    description: string;
-    amount: number;
-    workUsePercent: number;
-    method?: string;
-    km?: number;
-    receipt: boolean;
-    notes?: string;
-    attachmentData?: string;
-  }, number>;
+  deductionEntries!: Table<DeductionEntry & { attachmentData?: string; amountType?: "inc" | "ex"; gstTreatment?: "taxable" | "gst_free" | "input_taxed" }, number>;
   gstEntries!: Table<{
     id?: number;
     profileKey: "uber";

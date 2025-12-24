@@ -7,12 +7,10 @@ import { computeGst } from "../../src/lib/ato/gst";
 import { validateDeduction, type DeductionEntryInput } from "../../src/lib/ato/validation";
 import { getTaxYear } from "../../src/lib/ato/helpers";
 import { incomeTaxResident, medicareLevy } from "../../src/lib/ato/tax";
+import type { DeductionEntry as DeductionEntryBase } from "../../src/lib/types";
 
-type DeductionEntry = DeductionEntryInput & {
+type DeductionEntry = DeductionEntryBase & {
   id?: number;
-  description?: string;
-  receipt: boolean;
-  notes?: string;
   attachmentData?: string;
   amountType?: "inc" | "ex";
   gstTreatment?: "taxable" | "gst_free" | "input_taxed";
@@ -118,6 +116,7 @@ export default function AtoPage() {
       profileKey: profile,
       date: deductionForm.date,
       categoryKey: deductionForm.categoryKey,
+      description: deductionForm.description || "",
       amount: deductionForm.amount,
       workUsePercent: deductionForm.workUsePercent,
       method: deductionForm.method,
