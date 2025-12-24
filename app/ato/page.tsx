@@ -43,12 +43,12 @@ export default function AtoPage() {
     profileKey: "it",
     date: todayISO,
     categoryKey: rules.it.categories[0].key,
-    description: "",
     amount: 0,
     workUsePercent: 100,
     receipt: true,
     amountType: "inc",
-    gstTreatment: "taxable"
+    gstTreatment: "taxable",
+    notes: ""
   });
   const [gstForm, setGstForm] = useState<GstEntry>({
     profileKey: "uber",
@@ -116,7 +116,7 @@ export default function AtoPage() {
       profileKey: profile,
       date: deductionForm.date,
       categoryKey: deductionForm.categoryKey,
-      description: deductionForm.description || "",
+      description: deductionForm.notes,
       amount: deductionForm.amount,
       workUsePercent: deductionForm.workUsePercent,
       method: deductionForm.method,
@@ -133,24 +133,24 @@ export default function AtoPage() {
         : deductionForm.amount;
     await db.transaction("rw", db.deductionEntries, db.gstEntries, async () => {
       const id = await db.deductionEntries.add({ ...deductionForm, profileKey: profile, amount });
-      setDeductions((prev) => [...prev, { ...deductionForm, profileKey: profile, id, amount }]);
-      if (profile === "uber") {
-        const gstAmount = computeGst({
-          amount,
-          amountType: deductionForm.amountType ?? "inc",
-          gstTreatment: deductionForm.gstTreatment ?? "taxable"
-        });
-        if (gstAmount > 0) {
-          await db.gstEntries.add({
-            profileKey: "uber",
-            date: deductionForm.date,
-            type: "purchase",
-            description: deductionForm.description || deductionForm.categoryKey,
-            amount,
-            amountType: deductionForm.amountType ?? "inc",
-            gstTreatment: deductionForm.gstTreatment ?? "taxable",
-            gstAmount,
-            receipt: deductionForm.receipt
+          setDeductions((prev) => [...prev, { ...deductionForm, profileKey: profile, id, amount }]);
+          if (profile === "uber") {
+            const gstAmount = computeGst({
+              amount,
+              amountType: deductionForm.amountType ?? "inc",
+              gstTreatment: deductionForm.gstTreatment ?? "taxable"
+            });
+            if (gstAmount > 0) {
+              await db.gstEntries.add({
+                profileKey: "uber",
+                date: deductionForm.date,
+                type: "purchase",
+                description: deductionForm.notes || deductionForm.categoryKey,
+                amount,
+                amountType: deductionForm.amountType ?? "inc",
+                gstTreatment: deductionForm.gstTreatment ?? "taxable",
+                gstAmount,
+                receipt: deductionForm.receipt
           });
         }
       }
@@ -160,12 +160,12 @@ export default function AtoPage() {
       profileKey: profile,
       date: todayISO,
       categoryKey: rules[profile].categories[0].key,
-      description: "",
       amount: 0,
       workUsePercent: 100,
       receipt: true,
       amountType: "inc",
-      gstTreatment: "taxable"
+      gstTreatment: "taxable",
+      notes: ""
     });
   };
 
@@ -285,7 +285,7 @@ export default function AtoPage() {
                     {d.method ? ` · ${d.method}` : ""}
                     {d.km ? ` · ${d.km}km @ $${CENTS_PER_KM_RATE}/km` : ""}
                   </p>
-                  {d.description && <p className="text-xs text-slate-400">{d.description}</p>}
+                  {d.notes && <p className="text-xs text-slate-400">{d.notes}</p>}
                   {d.attachmentData && (
                     <img src={d.attachmentData} alt="Receipt" className="mt-2 h-24 rounded border border-white/10" />
                   )}
@@ -423,11 +423,12 @@ export default function AtoPage() {
                 </select>
               </label>
               <label className="col-span-2 text-slate-300">
-                Description
+                Notes
                 <input
                   className="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-sm"
-                  value={deductionForm.description}
-                  onChange={(e) => setDeductionForm((p) => ({ ...p, description: e.target.value }))}
+                  value={deductionForm.notes ?? ""}
+                  onChange={(e) => setDeductionForm((p) => ({ ...p, notes: e.target.value }))}
+                  placeholder="Optional notes / description"
                 />
               </label>
               <label className="text-slate-300">

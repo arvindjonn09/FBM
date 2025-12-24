@@ -5,7 +5,7 @@ export type DeductionEntryInput = {
   profileKey: ProfileKey;
   date: string;
   categoryKey: string;
-  description: string;
+  description?: string;
   amount: number;
   workUsePercent: number;
   method?: string;

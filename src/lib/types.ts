@@ -49,7 +49,7 @@ export interface DeductionEntry {
   profileKey: "it" | "uber";
   date: string; // YYYY-MM-DD
   categoryKey: string;
-  description: string;
+  description?: string;
   amount: number;
   workUsePercent: number;
   receipt: boolean;
