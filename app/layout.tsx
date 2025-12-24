@@ -25,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-4 text-sm">
               <Link href="/">Dashboard</Link>
               <Link href="/overview">Totals</Link>
+              <Link href="/ato">ATO</Link>
               <Link href="/debts">Debts</Link>
               <Link href="/analytics">Analytics</Link>
               <Link href="/settings">Settings</Link>

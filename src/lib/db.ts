@@ -7,6 +7,32 @@ export class CalendarDB extends Dexie {
   occurrences!: Table<Occurrence, number>;
   settings!: Table<{ id: string; key: string; value: string }, string>;
   backups!: Table<{ id?: number; createdAt: string; payload: string }, number>;
+  profiles!: Table<{ id?: number; key: "it" | "uber"; name: string }, number>;
+  deductionEntries!: Table<{
+    id?: number;
+    profileKey: "it" | "uber";
+    date: string;
+    categoryKey: string;
+    description: string;
+    amount: number;
+    workUsePercent: number;
+    method?: string;
+    km?: number;
+    receipt: boolean;
+    notes?: string;
+  }, number>;
+  gstEntries!: Table<{
+    id?: number;
+    profileKey: "uber";
+    date: string;
+    type: "sale" | "purchase";
+    description: string;
+    amount: number;
+    amountType: "inc" | "ex";
+    gstTreatment: "taxable" | "gst_free" | "input_taxed";
+    gstAmount: number;
+    receipt: boolean;
+  }, number>;
 
   constructor() {
     super("CalendarMBA");
@@ -16,6 +42,13 @@ export class CalendarDB extends Dexie {
       occurrences: "++id, scheduleId, date, plannedAmount, status, paidAmount, paidDate",
       settings: "id, key",
       backups: "++id, createdAt"
+    });
+    this.version(2).stores({
+      profiles: "++id, key, name",
+      deductionEntries:
+        "++id, profileKey, date, categoryKey, amount, workUsePercent, method, km, receipt, notes",
+      gstEntries:
+        "++id, profileKey, date, type, amount, amountType, gstTreatment, gstAmount, receipt"
     });
   }
 }
