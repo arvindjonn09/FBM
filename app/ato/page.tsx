@@ -8,7 +8,14 @@ import { validateDeduction, type DeductionEntryInput } from "../../src/lib/ato/v
 import { getTaxYear } from "../../src/lib/ato/helpers";
 import { incomeTaxResident, medicareLevy } from "../../src/lib/ato/tax";
 
-type DeductionEntry = DeductionEntryInput & { id?: number; receipt: boolean; notes?: string; attachmentData?: string };
+type DeductionEntry = DeductionEntryInput & {
+  id?: number;
+  receipt: boolean;
+  notes?: string;
+  attachmentData?: string;
+  amountType?: "inc" | "ex";
+  gstTreatment?: "taxable" | "gst_free" | "input_taxed";
+};
 
 type GstEntry = {
   id?: number;
@@ -40,7 +47,9 @@ export default function AtoPage() {
     description: "",
     amount: 0,
     workUsePercent: 100,
-    receipt: true
+    receipt: true,
+    amountType: "inc",
+    gstTreatment: "taxable"
   });
   const [gstForm, setGstForm] = useState<GstEntry>({
     profileKey: "uber",
@@ -122,9 +131,29 @@ export default function AtoPage() {
       profile === "uber" && deductionForm.categoryKey === "car_expenses" && deductionForm.method === "cents_per_km"
         ? (deductionForm.km ?? 0) * CENTS_PER_KM_RATE
         : deductionForm.amount;
-    await db.transaction("rw", db.deductionEntries, async () => {
+    await db.transaction("rw", db.deductionEntries, db.gstEntries, async () => {
       const id = await db.deductionEntries.add({ ...deductionForm, profileKey: profile, amount });
       setDeductions((prev) => [...prev, { ...deductionForm, profileKey: profile, id, amount }]);
+      if (profile === "uber") {
+        const gstAmount = computeGst({
+          amount,
+          amountType: deductionForm.amountType ?? "inc",
+          gstTreatment: deductionForm.gstTreatment ?? "taxable"
+        });
+        if (gstAmount > 0) {
+          await db.gstEntries.add({
+            profileKey: "uber",
+            date: deductionForm.date,
+            type: "purchase",
+            description: deductionForm.description || deductionForm.categoryKey,
+            amount,
+            amountType: deductionForm.amountType ?? "inc",
+            gstTreatment: deductionForm.gstTreatment ?? "taxable",
+            gstAmount,
+            receipt: deductionForm.receipt
+          });
+        }
+      }
     });
     setShowDeductionModal(false);
     setDeductionForm({
@@ -134,7 +163,9 @@ export default function AtoPage() {
       description: "",
       amount: 0,
       workUsePercent: 100,
-      receipt: true
+      receipt: true,
+      amountType: "inc",
+      gstTreatment: "taxable"
     });
   };
 
@@ -425,6 +456,38 @@ export default function AtoPage() {
                 />
                 Receipt kept
               </label>
+              {profile === "uber" && (
+                <>
+                  <label className="text-slate-300">
+                    GST amount type
+                    <select
+                      className="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-sm"
+                      value={deductionForm.amountType ?? "inc"}
+                      onChange={(e) => setDeductionForm((p) => ({ ...p, amountType: e.target.value as "inc" | "ex" }))}
+                    >
+                      <option value="inc">GST inclusive</option>
+                      <option value="ex">GST exclusive</option>
+                    </select>
+                  </label>
+                  <label className="text-slate-300">
+                    GST treatment
+                    <select
+                      className="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-sm"
+                      value={deductionForm.gstTreatment ?? "taxable"}
+                      onChange={(e) =>
+                        setDeductionForm((p) => ({
+                          ...p,
+                          gstTreatment: e.target.value as "taxable" | "gst_free" | "input_taxed"
+                        }))
+                      }
+                    >
+                      <option value="taxable">Taxable</option>
+                      <option value="gst_free">GST free</option>
+                      <option value="input_taxed">Input taxed</option>
+                    </select>
+                  </label>
+                </>
+              )}
               <label className="col-span-2 text-slate-300">
                 Receipt image (optional)
                 <input
