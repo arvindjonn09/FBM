@@ -8,7 +8,7 @@ import { validateDeduction, type DeductionEntryInput } from "../../src/lib/ato/v
 import { getTaxYear } from "../../src/lib/ato/helpers";
 import { incomeTaxResident, medicareLevy } from "../../src/lib/ato/tax";
 
-type DeductionEntry = DeductionEntryInput & { id?: number; receipt: boolean; notes?: string };
+type DeductionEntry = DeductionEntryInput & { id?: number; receipt: boolean; notes?: string; attachmentData?: string };
 
 type GstEntry = {
   id?: number;
@@ -25,6 +25,7 @@ type GstEntry = {
 
 const todayISO = new Date().toISOString().slice(0, 10);
 const currentTaxYear = getTaxYear(todayISO);
+const CENTS_PER_KM_RATE = 0.78; // ATO cents per km rate (keep updated)
 
 export default function AtoPage() {
   const [profile, setProfile] = useState<ProfileKey>("it");
@@ -117,9 +118,13 @@ export default function AtoPage() {
       setError(msg);
       return;
     }
+    const amount =
+      profile === "uber" && deductionForm.categoryKey === "car_expenses" && deductionForm.method === "cents_per_km"
+        ? (deductionForm.km ?? 0) * CENTS_PER_KM_RATE
+        : deductionForm.amount;
     await db.transaction("rw", db.deductionEntries, async () => {
-      const id = await db.deductionEntries.add({ ...deductionForm, profileKey: profile });
-      setDeductions((prev) => [...prev, { ...deductionForm, profileKey: profile, id }]);
+      const id = await db.deductionEntries.add({ ...deductionForm, profileKey: profile, amount });
+      setDeductions((prev) => [...prev, { ...deductionForm, profileKey: profile, id, amount }]);
     });
     setShowDeductionModal(false);
     setDeductionForm({
@@ -241,19 +246,23 @@ export default function AtoPage() {
                 {filteredDeductions.map((d) => (
                   <div key={d.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold">{d.categoryKey}</p>
-                      <p className="text-sm text-slate-300">{d.date}</p>
-                    </div>
-                    <p className="text-sm text-slate-200">
-                      ${d.amount.toFixed(2)} · Work {d.workUsePercent}% {d.method ? `· ${d.method}` : ""}
-                      {d.km ? ` · ${d.km}km` : ""}
-                    </p>
-                    {d.description && <p className="text-xs text-slate-400">{d.description}</p>}
+                    <p className="font-semibold">{d.categoryKey}</p>
+                    <p className="text-sm text-slate-300">{d.date}</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <p className="text-sm text-slate-200">
+                    ${d.amount.toFixed(2)} · Work {d.workUsePercent}%
+                    {d.method ? ` · ${d.method}` : ""}
+                    {d.km ? ` · ${d.km}km @ $${CENTS_PER_KM_RATE}/km` : ""}
+                  </p>
+                  {d.description && <p className="text-xs text-slate-400">{d.description}</p>}
+                  {d.attachmentData && (
+                    <img src={d.attachmentData} alt="Receipt" className="mt-2 h-24 rounded border border-white/10" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         </section>
       )}
 
@@ -415,6 +424,24 @@ export default function AtoPage() {
                   onChange={(e) => setDeductionForm((p) => ({ ...p, receipt: e.target.checked }))}
                 />
                 Receipt kept
+              </label>
+              <label className="col-span-2 text-slate-300">
+                Receipt image (optional)
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="mt-1 w-full text-sm"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                      const dataUrl = evt.target?.result as string;
+                      setDeductionForm((p) => ({ ...p, attachmentData: dataUrl }));
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
               </label>
               {profile === "uber" && deductionForm.categoryKey === "car_expenses" && (
                 <>

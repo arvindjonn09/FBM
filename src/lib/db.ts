@@ -20,6 +20,7 @@ export class CalendarDB extends Dexie {
     km?: number;
     receipt: boolean;
     notes?: string;
+    attachmentData?: string;
   }, number>;
   gstEntries!: Table<{
     id?: number;
@@ -47,6 +48,13 @@ export class CalendarDB extends Dexie {
       profiles: "++id, key, name",
       deductionEntries:
         "++id, profileKey, date, categoryKey, amount, workUsePercent, method, km, receipt, notes",
+      gstEntries:
+        "++id, profileKey, date, type, amount, amountType, gstTreatment, gstAmount, receipt"
+    });
+    this.version(3).stores({
+      profiles: "++id, key, name",
+      deductionEntries:
+        "++id, profileKey, date, categoryKey, amount, workUsePercent, method, km, receipt, notes, attachmentData",
       gstEntries:
         "++id, profileKey, date, type, amount, amountType, gstTreatment, gstAmount, receipt"
     });

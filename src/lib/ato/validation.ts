@@ -9,6 +9,7 @@ export type DeductionEntryInput = {
   workUsePercent: number;
   method?: string;
   km?: number;
+  receipt?: boolean;
 };
 
 type ValidationContext = {
