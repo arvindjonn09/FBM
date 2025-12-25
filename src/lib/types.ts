@@ -57,3 +57,46 @@ export interface DeductionEntry {
   km?: number;
   notes?: string;
 }
+
+export interface ImportBatch {
+  id?: number;
+  importBatchId: string;
+  sourceKey: string;
+  fileName?: string;
+  importedAt: string;
+  rowCount: number;
+}
+
+export interface BankTransaction {
+  id?: number;
+  importBatchId: string;
+  sourceKey: string;
+  dateISO: string;
+  description: string;
+  signedAmount: number;
+  direction: "debit" | "credit";
+  categoryKey: string;
+  profileKey: "it" | "uber" | "personal";
+  gstAmount?: number;
+  gstTreatment?: "taxable" | "gst_free" | "input_taxed";
+  amountType?: "inc" | "ex";
+  confidence?: number;
+  matchedRule?: string;
+  dedupeKey?: string;
+}
+
+export interface CsvMapping {
+  sourceKey: string;
+  headersSignature: string;
+  mappingJson: string;
+}
+
+export interface CategoryRule {
+  id?: number;
+  pattern: string;
+  matchType: "contains" | "startsWith" | "equals";
+  categoryKey: string;
+  profileKey?: "it" | "uber" | "personal";
+  priority: number;
+  enabled: boolean;
+}

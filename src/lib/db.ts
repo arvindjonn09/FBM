@@ -1,5 +1,5 @@
 import Dexie, { Table } from "dexie";
-import { DebtAccount, DeductionEntry, Occurrence, Schedule } from "./types";
+import { DebtAccount, DeductionEntry, ImportBatch, BankTransaction, CsvMapping, CategoryRule, Occurrence, Schedule } from "./types";
 
 export class CalendarDB extends Dexie {
   debtAccounts!: Table<DebtAccount, number>;
@@ -44,6 +44,18 @@ export class CalendarDB extends Dexie {
         "++id, profileKey, date, categoryKey, amount, workUsePercent, method, km, receipt, notes, attachmentData",
       gstEntries:
         "++id, profileKey, date, type, amount, amountType, gstTreatment, gstAmount, receipt"
+    });
+    this.version(4).stores({
+      profiles: "++id, key, name",
+      deductionEntries:
+        "++id, profileKey, date, categoryKey, amount, workUsePercent, method, km, receipt, notes, attachmentData, amountType, gstTreatment",
+      gstEntries:
+        "++id, profileKey, date, type, amount, amountType, gstTreatment, gstAmount, receipt",
+      importBatches: "++id, importBatchId, sourceKey, importedAt",
+      bankTransactions:
+        "++id, importBatchId, dateISO, description, signedAmount, direction, categoryKey, profileKey, sourceKey, dedupeKey",
+      csvMappings: "[sourceKey+headersSignature], sourceKey, headersSignature",
+      categoryRules: "++id, pattern, matchType, categoryKey, profileKey, priority, enabled"
     });
   }
 }
