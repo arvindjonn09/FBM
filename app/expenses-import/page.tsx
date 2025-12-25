@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { db } from "../../src/lib/db";
 import { applyRules, detectMapping, headersSignature, normalizeRows, parseCsv } from "../../src/lib/expenses/parser";
 import type { BankTransaction, CategoryRule, CsvMapping } from "../../src/lib/types";
@@ -89,7 +88,7 @@ export default function ExpensesImportPage() {
       setStatus("No rows to save.");
       return;
     }
-    const batchId = uuidv4();
+    const batchId = crypto.randomUUID();
     const now = new Date().toISOString();
     const unique = new Map<string, BankTransaction>();
     parsedRows.forEach((t) => {

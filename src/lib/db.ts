@@ -8,7 +8,10 @@ export class CalendarDB extends Dexie {
   settings!: Table<{ id: string; key: string; value: string }, string>;
   backups!: Table<{ id?: number; createdAt: string; payload: string }, number>;
   profiles!: Table<{ id?: number; key: "it" | "uber"; name: string }, number>;
-  deductionEntries!: Table<DeductionEntry & { attachmentData?: string; amountType?: "inc" | "ex"; gstTreatment?: "taxable" | "gst_free" | "input_taxed" }, number>;
+  deductionEntries!: Table<
+    DeductionEntry & { attachmentData?: string; amountType?: "inc" | "ex"; gstTreatment?: "taxable" | "gst_free" | "input_taxed" },
+    number
+  >;
   gstEntries!: Table<{
     id?: number;
     profileKey: "uber";
@@ -21,6 +24,10 @@ export class CalendarDB extends Dexie {
     gstAmount: number;
     receipt: boolean;
   }, number>;
+  importBatches!: Table<ImportBatch, number>;
+  bankTransactions!: Table<BankTransaction, number>;
+  csvMappings!: Table<CsvMapping, [string, string]>;
+  categoryRules!: Table<CategoryRule, number>;
 
   constructor() {
     super("CalendarMBA");

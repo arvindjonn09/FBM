@@ -8,3 +8,5 @@ yarn-error.log*
 pnpm-debug.log*
 dist
 out
+public/sw.js
+public/workbox-*.js
