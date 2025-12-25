@@ -71,6 +71,7 @@ export default function DebtsPage() {
   const [form, setForm] = useState<LoanInput>({ name: "", balance: 0, apr: 0, termMonths: 12, payment: 0 });
   const [extra, setExtra] = useState(20);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<DebtAccount | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -109,6 +110,20 @@ export default function DebtsPage() {
       setDebts((prev) => [...prev, { ...next, id }]);
       setForm({ name: "", balance: 0, apr: 0, termMonths: 12, payment: 0 });
     });
+  };
+
+  const handleUpdate = async () => {
+    if (!editing || !editing.id) return;
+    await db.debtAccounts.update(editing.id, editing);
+    setDebts((prev) => prev.map((d) => (d.id === editing.id ? editing : d)));
+    setEditing(null);
+  };
+
+  const handleDelete = async (id?: number) => {
+    if (!id) return;
+    await db.debtAccounts.delete(id);
+    setDebts((prev) => prev.filter((d) => d.id !== id));
+    if (editing?.id === id) setEditing(null);
   };
 
   const extraProjection = useMemo(() => payoffWithExtra(debts, extra), [debts, extra]);
@@ -177,6 +192,20 @@ export default function DebtsPage() {
               <p className="text-xs text-slate-400">
                 Paying ${extra} extra/month to this account shortens payoff further (avalanche picks highest APR first).
               </p>
+              <div className="flex gap-2">
+                <button
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs hover:bg-white/10"
+                  onClick={() => setEditing(debt)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="rounded-full border border-rose-500/40 px-3 py-1 text-xs text-rose-200 hover:bg-rose-500/10"
+                  onClick={() => handleDelete(debt.id)}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -291,6 +320,59 @@ export default function DebtsPage() {
             $30 extra to see months shaved off; keep bumping extra until payoff date fits your target.
           </div>
         </div>
+        {editing && (
+          <div className="card p-4 space-y-3 lg:col-span-2">
+            <h3 className="text-lg font-semibold">Edit debt</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <label className="text-slate-300">
+                Name
+                <input
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-sm"
+                  value={editing.name}
+                  onChange={(e) => setEditing((d) => (d ? { ...d, name: e.target.value } : d))}
+                />
+              </label>
+              <label className="text-slate-300">
+                Balance
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-sm"
+                  value={editing.balance}
+                  onChange={(e) => setEditing((d) => (d ? { ...d, balance: Number(e.target.value) } : d))}
+                />
+              </label>
+              <label className="text-slate-300">
+                APR (%)
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-sm"
+                  value={editing.apr ?? 0}
+                  onChange={(e) => setEditing((d) => (d ? { ...d, apr: Number(e.target.value) } : d))}
+                />
+              </label>
+              <label className="text-slate-300">
+                Min payment
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-sm"
+                  value={editing.minPayment ?? 0}
+                  onChange={(e) => setEditing((d) => (d ? { ...d, minPayment: Number(e.target.value) } : d))}
+                />
+              </label>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-emerald-400"
+                onClick={handleUpdate}
+              >
+                Save changes
+              </button>
+              <button className="text-sm text-slate-300 hover:text-white" onClick={() => setEditing(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
