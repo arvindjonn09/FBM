@@ -1,13 +1,16 @@
 import "./globals.css";
 import Link from "next/link";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { ServiceWorkerRegister } from "../components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "Debt & Cashflow Tracker",
   description: "Offline-first PWA for debt and cashflow tracking",
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.webmanifest"
+};
+
+export const viewport: Viewport = {
   themeColor: "#0f172a"
 };
 
