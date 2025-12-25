@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "../../src/lib/db";
 import { applyRules, detectMapping, headersSignature, normalizeRows, parseCsv } from "../../src/lib/expenses/parser";
 import type { BankTransaction, CategoryRule, CsvMapping } from "../../src/lib/types";
+import { toDisplay } from "../../src/lib/date";
 
 const sources = [
   { key: "commbank", label: "CommBank" },
@@ -219,7 +220,7 @@ export default function ExpensesImportPage() {
               <tbody>
                 {parsedRows.map((row, idx) => (
                   <tr key={idx} className="border-t border-white/5">
-                    <td className="py-2 pr-4">{row.dateISO}</td>
+                    <td className="py-2 pr-4">{toDisplay(row.dateISO)}</td>
                     <td className="py-2 pr-4">{row.description}</td>
                     <td className="py-2 pr-4">{row.signedAmount.toFixed(2)}</td>
                     <td className="py-2 pr-4">

@@ -8,6 +8,7 @@ import { validateDeduction, type DeductionEntryInput } from "../../src/lib/ato/v
 import { getTaxYear } from "../../src/lib/ato/helpers";
 import { incomeTaxResident, medicareLevy } from "../../src/lib/ato/tax";
 import type { DeductionEntry as DeductionEntryBase } from "../../src/lib/types";
+import { toDisplay } from "../../src/lib/date";
 
 type DeductionEntry = DeductionEntryBase & {
   id?: number;
@@ -278,7 +279,7 @@ export default function AtoPage() {
                   <div key={d.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
                     <div className="flex items-center justify-between">
                     <p className="font-semibold">{d.categoryKey}</p>
-                    <p className="text-sm text-slate-300">{d.date}</p>
+                    <p className="text-sm text-slate-300">{toDisplay(d.date)}</p>
                   </div>
                   <p className="text-sm text-slate-200">
                     ${d.amount.toFixed(2)} · Work {d.workUsePercent}%

@@ -133,6 +133,7 @@ export function applyRules(txns: BankTransaction[], rules: CategoryRule[]) {
       categoryKey = "zip_payments_or_purchases";
       confidence = Math.max(confidence, 0.75);
     }
-    return { ...t, categoryKey, profileKey, confidence, matchedRule };
+    return { ...t, categoryKey, profileKey, confidence, matchedRule, dateISO: t.dateISO, description: t.description };
   });
 }
+import { toDisplay } from "../date";
