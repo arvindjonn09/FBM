@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DebtAccount } from "../../src/lib/types";
 import { sortDebts } from "../../src/lib/payoff";
+import { db } from "../../src/lib/db";
 
 type LoanInput = {
   name: string;
@@ -11,8 +12,6 @@ type LoanInput = {
   termMonths: number;
   payment: number;
 };
-
-const defaultDebts: DebtAccount[] = [];
 
 const calcEmi = (principal: number, apr: number, months: number) => {
   if (months <= 0) return 0;
@@ -68,9 +67,20 @@ const payoffWithExtra = (debts: DebtAccount[], extra: number) => {
 };
 
 export default function DebtsPage() {
-  const [debts, setDebts] = useState<DebtAccount[]>(defaultDebts);
+  const [debts, setDebts] = useState<DebtAccount[]>([]);
   const [form, setForm] = useState<LoanInput>({ name: "", balance: 0, apr: 0, termMonths: 12, payment: 0 });
   const [extra, setExtra] = useState(20);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const items = await db.debtAccounts.toArray();
+      setDebts(items);
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const totals = useMemo(() => {
     const totalBalance = debts.reduce((s, d) => s + d.balance, 0);
@@ -86,10 +96,8 @@ export default function DebtsPage() {
   const handleAdd = () => {
     if (!form.name || form.balance <= 0 || form.termMonths <= 0) return;
     const inferredApr = form.apr > 0 ? form.apr : estimateAprFromPayment(form.balance, form.payment, form.termMonths);
-    const emi =
-      form.payment > 0 ? form.payment : calcEmi(form.balance, inferredApr, form.termMonths);
+    const emi = form.payment > 0 ? form.payment : calcEmi(form.balance, inferredApr, form.termMonths);
     const next: DebtAccount = {
-      id: Date.now(),
       name: form.name,
       balance: form.balance,
       apr: inferredApr,
@@ -97,8 +105,10 @@ export default function DebtsPage() {
       dueDay: undefined,
       active: true
     };
-    setDebts((prev) => [...prev, next]);
-    setForm({ name: "", balance: 0, apr: 0, termMonths: 12, payment: 0 });
+    db.debtAccounts.add(next).then((id) => {
+      setDebts((prev) => [...prev, { ...next, id }]);
+      setForm({ name: "", balance: 0, apr: 0, termMonths: 12, payment: 0 });
+    });
   };
 
   const extraProjection = useMemo(() => payoffWithExtra(debts, extra), [debts, extra]);
@@ -148,7 +158,9 @@ export default function DebtsPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        {debts.length === 0 ? (
+        {loading ? (
+          <div className="card p-4 text-sm text-slate-300">Loading debts…</div>
+        ) : debts.length === 0 ? (
           <div className="card p-4 text-sm text-slate-300">
             No debts added yet. Use the loan/EMI calculator below to add your first entry.
           </div>
