@@ -5,6 +5,7 @@ import { db } from "../../src/lib/db";
 import { applyRules, detectMapping, headersSignature, normalizeRows, parseCsv } from "../../src/lib/expenses/parser";
 import type { BankTransaction, CategoryRule, CsvMapping } from "../../src/lib/types";
 import { toDisplay } from "../../src/lib/date";
+import { newId } from "../../src/lib/id";
 
 const sources = [
   { key: "commbank", label: "CommBank" },
@@ -88,7 +89,7 @@ export default function ExpensesImportPage() {
       setStatus("No rows to save.");
       return;
     }
-    const batchId = crypto.randomUUID();
+    const batchId = newId();
     const now = new Date().toISOString();
     const unique = new Map<string, BankTransaction>();
     parsedRows.forEach((t) => {
